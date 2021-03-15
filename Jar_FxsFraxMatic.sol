@@ -20,6 +20,8 @@ contract FxsFraxJar is ERC20, Ownable {
     IERC20 public token;
     address public strategy;
     uint256 earnTimeLock = 0;
+    mapping (address => uint256) private lastTimeStaked;
+    mapping (address => uint256) private lastTimeRestaked;
 
     constructor(IStrategy _strategy)
         public
@@ -60,6 +62,7 @@ contract FxsFraxJar is ERC20, Ownable {
 
     function deposit(uint256 _amount) public {
         require(msg.sender == tx.origin, "no contracts");
+        lastTimeStaked[msg.sender] = now;
 
         uint256 _pool = balance();
         uint256 _before = token.balanceOf(address(this));
@@ -110,13 +113,16 @@ contract FxsFraxJar is ERC20, Ownable {
         return balance().mul(1e18).div(totalSupply());
     }
 
-    mapping(address => uint256) private lastTimeRestaked;
-
     //Migrating returns all staked funds to the jar, call restake() to restake your tokens
     //The website UI will say that a migration has happened recently and a link to the new staking contract will appear for users to review
     function restake() public {
         //24 hour delay in order to prevent someone from repeatedly calling it to deposit other people's funds
         require(lastTimeRestaked[msg.sender] < now, "User already restaked");
+
+        //Don't allow stakers to call this function if they staked after the migration because that would allow the new staker to move other people's funds
+        uint256 lastTimeMigrated = IStrategy(strategy).getLastTimeMigrated();
+        require(lastTimeStaked[msg.sender] < lastTimeMigrated, "Staked after the migration");
+
         lastTimeRestaked[msg.sender] = now + 1 days;
         //Deposit user's shares back into the strategy contract
         uint256 _shares = balanceOf(msg.sender);
@@ -131,5 +137,10 @@ contract FxsFraxJar is ERC20, Ownable {
     //Website UI will hide the restake button for a user if it's been less than 1 day since they last restaked
     function getLastTimeRestaked(address _address) public view returns (uint256) {
         return lastTimeRestaked[_address];
+    }
+
+    //Website UI will hide the restake button for a user if they staked after the migration
+    function getLastTimeStaked(address _address) public view returns (uint256) {
+        return lastTimeStaked[_address];
     }
 }
