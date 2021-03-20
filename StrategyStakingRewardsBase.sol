@@ -56,6 +56,7 @@ abstract contract StrategyStakingRewardsBase is StrategyBase {
     }
 
     function migrate(address newStakingContract) external onlyOwner {
+        lastTimeMigrated = now;
         //Collect all rewards from the old staking contract and convert to LP
         harvest();
         //Withdraw all tokens from the old staking contract
@@ -69,7 +70,6 @@ abstract contract StrategyStakingRewardsBase is StrategyBase {
         if(_want > 0) {
             IERC20(want).safeTransfer(jar, _want);
         }
-        lastTimeMigrated = now;
     }
 
     function testDeposit() internal {

@@ -19,7 +19,7 @@ contract FxsFraxJar is ERC20, Ownable {
 
     IERC20 public token;
     address public strategy;
-    uint256 earnTimeLock = 0;
+    //uint256 earnTimeLock = 0;
     mapping (address => uint256) private lastTimeStaked;
     mapping (address => uint256) private lastTimeRestaked;
 
@@ -30,9 +30,16 @@ contract FxsFraxJar is ERC20, Ownable {
             string(abi.encodePacked("vFxsFrax2"))
         )
     {
+        require(address(_strategy) != address(0));
         _setupDecimals(ERC20(_strategy.want()).decimals());
         token = IERC20(_strategy.want());
         strategy = address(_strategy);
+    }
+
+    function transfer(address recipient, uint256 amount) public override returns (bool)
+    {
+        require(recipient != address(this));
+        return super.transfer(recipient, amount);
     }
 
     function balance() public view returns (uint256) {
@@ -42,9 +49,10 @@ contract FxsFraxJar is ERC20, Ownable {
             );
     }
 
-    //Stakes all funds in the jar
-    //Due to the addition of the migration function, earn() now needs a timelock
-    function earn() public onlyOwner {
+    //Stakes all funds in the jar - Due to the addition of the migration function, earn() now needs a timelock
+    //24 hour timelock is in line with Harvest Finance's 24 hour timelock
+    //but having funds protected by such a relatively short timelock was enough for me to not use Harvest, so I will remove earn() entirely
+    /*function earn() public onlyOwner {
         if(earnTimeLock != 0 && earnTimeLock < now) {
             uint256 _bal = token.balanceOf(address(this));
             token.safeTransfer(strategy, _bal);
@@ -54,7 +62,7 @@ contract FxsFraxJar is ERC20, Ownable {
         else if(earnTimeLock == 0) {
             earnTimeLock = now + 1 days;
         }
-    }
+    }*/
 
     function depositAll() external {
         deposit(token.balanceOf(msg.sender));
@@ -116,14 +124,13 @@ contract FxsFraxJar is ERC20, Ownable {
     //Migrating returns all staked funds to the jar, call restake() to restake your tokens
     //The website UI will say that a migration has happened recently and a link to the new staking contract will appear for users to review
     function restake() public {
-        //24 hour delay in order to prevent someone from repeatedly calling it to deposit other people's funds
-        require(lastTimeRestaked[msg.sender] < now, "User already restaked");
-
-        //Don't allow stakers to call this function if they staked after the migration because that would allow the new staker to move other people's funds
         uint256 lastTimeMigrated = IStrategy(strategy).getLastTimeMigrated();
+        //Don't allow stakers to call this function if they staked after the migration, because that would allow the new staker to move other people's funds
         require(lastTimeStaked[msg.sender] < lastTimeMigrated, "Staked after the migration");
+        //Prevent users from repeatedly calling this function to deposit other people's funds
+        require(lastTimeRestaked[msg.sender] < lastTimeMigrated, "User already restaked");
 
-        lastTimeRestaked[msg.sender] = now + 1 days;
+        lastTimeRestaked[msg.sender] = now;
         //Deposit user's shares back into the strategy contract
         uint256 _shares = balanceOf(msg.sender);
         uint256 r = (balance().mul(_shares)).div(totalSupply());

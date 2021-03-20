@@ -1,4 +1,4 @@
-pragma solidity >=0.6.0;
+pragma solidity ^0.6.7;
 
 // File: @openzeppelin/contracts/token/ERC20/ERC20.sol
 import "./ERC20.sol";
@@ -28,7 +28,7 @@ abstract contract StrategyBase is Ownable {
     address public jar;
 
     // Dex
-    address public currentRouter = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff; //Quickswap router
+    address public constant currentRouter = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff; //Quickswap router
 
     constructor(
         address _want,
@@ -70,6 +70,7 @@ abstract contract StrategyBase is Ownable {
     function setJar(address _jar) external onlyOwner {
         require(jar == address(0), "jar already set");
         jar = _jar;
+        emit SetJar(_jar);
     }
 
     // **** State mutations **** //
@@ -176,4 +177,7 @@ abstract contract StrategyBase is Ownable {
             deposit();
         }
     }
+
+    // **** Events **** //
+    event SetJar(address indexed jar);
 }

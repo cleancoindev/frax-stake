@@ -7,11 +7,11 @@ import "./IStakingRewards.sol";
 abstract contract StrategyFraxFarmBase is StrategyStakingRewardsBase {
 
     // Token addresses for MATIC
-    address public fxs = 0x3e121107F6F22DA4911079845a470757aF4e1A1b;
-    address public frax = 0x104592a158490a9228070E0A8e5343B499e125D0;
-    address public quick = 0x831753DD7087CaC61aB5644b308642cc1c33Dc13;
+    address public constant fxs = 0x3e121107F6F22DA4911079845a470757aF4e1A1b;
+    address public constant frax = 0x104592a158490a9228070E0A8e5343B499e125D0;
+    address public constant quick = 0x831753DD7087CaC61aB5644b308642cc1c33Dc13;
     
-    uint256 public keepFXS = 200; //2% dev fee
+    uint256 public constant keepFXS = 200; //2% dev fee
     uint256 public constant keepFXSmax = 10000;
 
     // Uniswap swap paths
