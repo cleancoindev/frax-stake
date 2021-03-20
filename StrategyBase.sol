@@ -77,12 +77,12 @@ abstract contract StrategyBase is Ownable {
     function deposit() public virtual;
 
     // Jar only function for creating additional rewards from dust
-    function withdraw(IERC20 _asset) external returns (uint256 balance) {
+    /*function withdraw(IERC20 _asset) external returns (uint256 balance) {
         require(msg.sender == jar, "!jar");
         require(want != address(_asset), "want");
         balance = _asset.balanceOf(address(this));
         _asset.safeTransfer(jar, balance);
-    }
+    }*/
 
     // Withdraw partial funds, normally used with a jar withdrawal
     function withdraw(uint256 _amount) external {
