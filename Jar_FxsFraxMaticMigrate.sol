@@ -12,7 +12,7 @@ import './SafeERC20.sol';
 // File: @openzeppelin/contracts/access/Ownable.sol
 import './Ownable.sol';
 
-//The audited FXS/FRAX vault contract, with the ability to restake user funds 24 hours after a migration added back to the contract
+//The audited FXS/FRAX vault contract, with the ability to restake user funds 12 hours after a migration added back to the contract
 contract FxsFraxJarMigrate is ERC20, Ownable {
     using SafeERC20 for IERC20;
     using Address for address;
@@ -50,11 +50,11 @@ contract FxsFraxJarMigrate is ERC20, Ownable {
     }
 
     //Restakes all funds in the jar after the vault migrates
-    //Can only be called 1 day after the migration was executed, which allows users to verify that the vault migrated to the correct contract
+    //Can only be called 12 hrs after the migration was executed, which allows users to verify that the vault migrated to the correct contract
     //The timelock cannot be initiated before the migration, which addresses issue 3.3 in the audit
     function restakeAll() public onlyOwner {
         uint256 lastTimeMigrated = IStrategy(strategy).getLastTimeMigrated();
-        require(lastTimeMigrated + 1 days < now, "Need to wait one day before migrating user funds");
+        require(lastTimeMigrated + 12 hours < now, "Need to wait 12 hrs before migrating user funds");
 
         uint256 _bal = token.balanceOf(address(this));
         token.safeTransfer(strategy, _bal);
